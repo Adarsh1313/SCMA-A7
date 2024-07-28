@@ -3,9 +3,7 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from twilio.rest import Client
 import bcrypt
-import pandas as pd
-import calplot
-import matplotlib.pyplot as plt
+import streamlit_calplot as calplot
 
 # Twilio credentials (replace with your actual credentials)
 TWILIO_ACCOUNT_SID = 'AC3938c1f5db3672ebe2863d8977f29bf3'
@@ -32,21 +30,14 @@ def send_sms_notification(to_number, message):
 def create_virtual_calendar():
     fig = go.Figure()
 
-    # Initial table setup with updated colors
     fig.add_trace(
         go.Table(
-            header=dict(
-                values=["Date", "Task", "Start Time", "End Time"],
-                fill_color="#4CAF50",  # Dark green color for header
-                align="center",
-                font=dict(color="white", size=12)
-            ),
-            cells=dict(
-                values=[[], [], [], []],
-                fill_color="#f8f8f8",  # Light grey color for empty cells
-                align="center",
-                font=dict(color="black", size=11)
-            )
+            header=dict(values=["Date", "Task", "Start Time", "End Time"],
+                        fill_color="lightgrey",
+                        align="left"),
+            cells=dict(values=[[], [], [], []],
+                       fill_color="lavender",
+                       align="left")
         )
     )
 
@@ -58,17 +49,9 @@ def create_virtual_calendar():
 
         fig.add_trace(
             go.Table(
-                cells=dict(
-                    values=[
-                        [start_date.strftime('%Y-%m-%d')],
-                        [summary],
-                        [start_date.strftime('%H:%M')],
-                        [end_date.strftime('%H:%M')]
-                    ],
-                    fill_color="#e6f7ff",  # Light blue color for task cells
-                    align="center",
-                    font=dict(color="black", size=11)
-                )
+                cells=dict(values=[[start_date.strftime('%Y-%m-%d')], [summary], [start_date.strftime('%H:%M')], [end_date.strftime('%H:%M')]],
+                           fill_color="lavender",
+                           align="left")
             )
         )
 
@@ -130,12 +113,15 @@ def sign_up():
             st.sidebar.success("Account created! Please log in.")
             st.session_state['page'] = 'login'  # Switch to login page
 
+    # Display how to use the app instructions on the sign-up page
+    display_how_to_use_instructions()
+
 # Login interface
 def login():
     st.sidebar.title("Login")
     username = st.sidebar.text_input("Username")
     password = st.sidebar.text_input("Password", type="password")
-    
+
     if st.sidebar.button("Login"):
         user_password_hash = st.session_state['users'].get(username)
         if user_password_hash and bcrypt.checkpw(password.encode(), user_password_hash):
@@ -143,35 +129,72 @@ def login():
         else:
             st.sidebar.error("Invalid username or password")
 
-# Create a function to generate the calendar data
-def generate_calendar_data():
-    # Create a DataFrame with all tasks
-    if len(st.session_state['tasks']) == 0:
-        return pd.DataFrame(columns=['date', 'task'])
+    # Display how to use the app instructions on the login page
+    display_how_to_use_instructions()
 
-    task_data = []
-    for task in st.session_state['tasks']:
-        task_data.append({'date': task['start_date'].date(), 'task': task['summary']})
+# Function to display how to use the app instructions
+def display_how_to_use_instructions():
+    st.write("""
+    ### How to Use the Daily Habits Tracker App
 
-    df_tasks = pd.DataFrame(task_data)
+    The Daily Habits Tracker is designed to help you organize your tasks, set reminders, and visualize your productivity. Here’s a step-by-step guide to getting started with the app:
 
-    # Count tasks per day
-    df_calendar = df_tasks.groupby('date').count().reset_index()
-    df_calendar.rename(columns={'task': 'count'}, inplace=True)
-    
-    return df_calendar
+    #### 1. Sign Up and Log In:
 
-def plot_calendar(df_calendar):
-    # Create a calendar heatmap using calplot
-    if not df_calendar.empty:
-        # Convert the data to a format suitable for calplot
-        s = pd.Series(df_calendar['count'].values, index=pd.to_datetime(df_calendar['date']))
+    - **Sign Up:**  
+      - Navigate to the **Sign Up** section on the sidebar.
+      - Enter a unique username and a secure password, then confirm your password.
+      - Click **Sign Up** to create your account. Once successful, you'll see a confirmation message.
 
-        # Plot the calendar
-        calplot.calplot(s, cmap="YlGnBu", colorbar=True, figsize=(10, 4))
-        st.pyplot(plt.gcf())  # Get the current figure for rendering
-    else:
-        st.write("No tasks scheduled yet.")
+    - **Log In:**  
+      - If you already have an account, go to the **Login** section on the sidebar.
+      - Enter your username and password.
+      - Click **Login** to access your dashboard.
+
+    #### 2. Add a New Task or Habit:
+
+    - **Open the Add Task Form:**  
+      - Once logged in, navigate to the **Add Task/Habit** section in the sidebar.
+
+    - **Enter Task Details:**  
+      - **Task/Habit Name:** Enter the name of the task or habit you want to track.
+      - **Start Date & Time:** Choose the start date and time from the calendar and time selector.
+      - **End Date & Time:** Select the end date and time.
+      - **Phone Number:** (Optional) Enter your phone number to receive SMS notifications.
+
+    - **Add the Task:**  
+      - Click **Add Task/Habit** to save your task. A confirmation message will appear, and the task will be added to your schedule.
+
+    #### 3. View Your Schedule:
+
+    - **Calendar Overview:**  
+      - At the bottom of the page, you’ll find an interactive calendar.
+      - Each date shows the number of tasks scheduled for that day.
+
+    - **Task Details:**  
+      - Click on any date in the calendar to view the list of tasks scheduled for that day.
+      - You can see details such as the task name, start time, and end time.
+
+    #### 4. Receive Notifications:
+
+    - **SMS Notifications:**  
+      - Ensure you’ve entered your phone number when adding a task to receive SMS reminders.
+      - The app will send you a notification 24 hours before the task starts.
+
+    #### 5. Analyze Your Productivity:
+
+    - **Visual Insights:**  
+      - Use the calendar heatmap to identify patterns in your task completion.
+      - Track which days are most productive and adjust your schedule accordingly.
+
+    **Tips for Getting the Most Out of the App:**
+
+    - **Stay Consistent:** Regularly update your tasks and habits to keep your schedule organized.
+    - **Review Daily:** Spend a few minutes each day reviewing your calendar and preparing for upcoming tasks.
+    - **Set Realistic Goals:** Break down larger tasks into smaller, manageable actions to avoid feeling overwhelmed.
+
+    By following these steps, you’ll maximize your productivity and stay on top of your daily tasks with ease. Happy tracking!
+    """)
 
 def main():
     st.title("Task and Habit Tracker")
@@ -196,26 +219,20 @@ def main():
         calendar_fig = create_virtual_calendar()
         st.plotly_chart(calendar_fig)
 
-        # Add a calendar visualization
-        st.header("Task Calendar")
+        # Display the interactive calendar at the bottom
+        task_dates = [task['start_date'].date() for task in st.session_state['tasks']]
+        task_count = {date: task_dates.count(date) for date in set(task_dates)}
 
-        # Generate the data for the calendar plot
-        df_calendar = generate_calendar_data()
+        st.subheader("Task Calendar")
+        task_dates_data = {str(date): count for date, count in task_count.items()}
 
-        # Plot the calendar heatmap
-        plot_calendar(df_calendar)
-
-        # Allow interaction to show tasks for a specific day
-        st.write("### Tasks for Selected Day")
-        selected_date = st.date_input("Select a date to view tasks:")
-        tasks_for_date = [task for task in st.session_state['tasks'] if task['start_date'].date() == selected_date]
-
-        if tasks_for_date:
-            for task in tasks_for_date:
-                st.write(f"- **Task:** {task['summary']}, **Time:** {task['start_date'].strftime('%H:%M')} - {task['end_date'].strftime('%H:%M')}")
-        else:
-            st.write("No tasks scheduled for this day.")
+        calplot.calplot(
+            task_dates_data,
+            years=datetime.now().year,
+            cmap='coolwarm',
+            figsize=(10, 2),
+            colorbar=True
+        )
 
 if __name__ == "__main__":
     main()
-
