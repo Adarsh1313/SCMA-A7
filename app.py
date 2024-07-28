@@ -3,7 +3,9 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from twilio.rest import Client
 import bcrypt
-import streamlit_calplot as calplot
+import pandas as pd
+import calplot
+import matplotlib.pyplot as plt
 
 # Twilio credentials (replace with your actual credentials)
 TWILIO_ACCOUNT_SID = 'AC3938c1f5db3672ebe2863d8977f29bf3'
