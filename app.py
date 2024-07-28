@@ -149,7 +149,7 @@ def display_how_to_use_instructions():
       - Click **Sign Up** to create your account. Once successful, you'll see a confirmation message.
 
     - **Log In:**  
-      - If you already have an account, go to the **Login** section on the sidebar.
+      - Go to the **Login** section on the sidebar.
       - Enter your username and password.
       - Click **Login** to access your dashboard.
 
